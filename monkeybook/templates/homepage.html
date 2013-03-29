@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block style %}
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="/static/css/roboto-condensed.css" rel="stylesheet" type="text/css">
+    <link href="/static/css/monkeybook.css" rel="stylesheet">
+    <link href="/static/css/jquery.modal.css" rel="stylesheet">
+    <link href="/static/css/yearbook-preview.css" rel="stylesheet">
+{% endblock %}
+
+{% block title %}MonkeyBook{% endblock %}
+
+{% block body_tag %}
+    <body class="monkeybook-bgcolor-lightyellow landing">
+{% endblock %}
+
+{% block body %}
+    <div class="row-fluid header monkeybook-bgcolor-darkbrown clear">
+        <div class="span7 offset2 monkeybook-landing-logo"></div>
+        <div class="span1 headerVerticalAlignCenter">
+            <a href="" class="monkeybook-color-white facebook-login">SIGN IN</a>
+        </div>
+  	</div>
+	
+    <div class="row-fluid monkeybook-main-image centered clear">
+    	<div class="row-fluid clear top-margin">
+			<div class="landing-headline offset2 span8">INSTANT FUN.</div>
+    	</div>
+	    <div class="row-fluid clear top-margin">
+		    <div class="landing-subhead offset2 span8">Make a book about you in 3 clicks</div>    
+		</div>    
+  
+  	    <div class="row-fluid clear landing-buttons">	  	    
+			<div class="span3 offset4"><input type="button" class="btn btn-info preview-button"
+                                              value="See An Example" /></div>
+			<div class="span2"><input type="button" class="btn btn-success facebook-login"
+                                      value="Test Beta Now" /></div>
+{#			<div class="span2"><input type="button" class="btn btn-success facebook-login" value="Get Started" /></div>#}
+		</div>
+	</div>
+
+    <div class="row-fluid clear">
+    <div class="landing-body-text offset2 span7 top-margin">
+        MonkeyBook instantly turns your Facebook timeline into a fun, free, beautiful
+        ebook that you can share with your friends. You can order a printed book for
+        your coffee table or send one as a gift. </div>
+    </div>
+
+    <div class="row-fluid header monkeybook-bgcolor-darkbrown clear landing-footer top-margin">
+        <div class="span8 offset2">
+{#            <a href="{% url 'about_us' %}">About Us</a>#}
+            <a href="{% url 'privacy' %}">Privacy Policy</a>
+            <a href="{% url 'terms' %}">Terms</a>
+{#            <a href="{% url 'contact' %}">Contact Us</a>#}
+        </div>
+  	</div>
+
+    {% include 'yearbook-preview.html' %}
+{% endblock %}
+
+{% block script %}
+    {% include 'yearbook-preview-js.html' %}
+    {% compress js %}
+        <script type="text/javascript" src="/static/js/lib/jquery.modal.min.js"></script>
+        <script type="text/javascript">
+            $(document).ready(function(){
+                $('.facebook-login').click(function(){
+                    F.connect($('#facebook-login-form'));
+                });
+
+                $('.preview-button').click(function(){
+                    $('#preview-modal').modal();
+                    $.modal.resize();
+
+                    // Open the book automatically
+                    setTimeout(function () { $('.sj-book').turn('page', 4); }, 3000);
+                });
+            });
+        </script>
+    {% endcompress %}
+{% endblock %}

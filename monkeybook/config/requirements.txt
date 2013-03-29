@@ -1,0 +1,8 @@
+ipython
+ipdb
+flask
+Flask-PyMongo
+Flask-Social
+flask_mongoengine
+facebook-sdk
+celery-with-mongodb

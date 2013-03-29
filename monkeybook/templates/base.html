@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <meta http-equiv="Access-Control-Allow-Origin" content="*">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% block meta %}
+        <meta name="description" content="The social yearbook that's instant,
+        effortless, and all about you.">
+        <meta name="author" content="MonkeyBook">
+    {% endblock %}
+
+    <title>{% block title %}MonkeyBook{% endblock %}</title>
+
+    {# Le HTML5 shim, for IE6-8 support of HTML5 elements #}
+    <!--[if lt IE 9]>
+        <script src="//html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    {% block style_uncompressed %}{% endblock %}
+    <link href="/static/css/base.css" rel="stylesheet">
+    {% block style %}{% endblock %}
+
+    <link rel="shortcut icon" href="/static/img/favicon.ico">
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="/static/img/book_icon_144.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="/static/img/book_icon_114.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="/static/img/book_icon_72.png">
+    <link rel="apple-touch-icon-precomposed" href="/static/img/book_icon_57.png">
+    {% block head %}{% endblock %}
+</head>
+
+{% block body_tag %}
+<body>
+{% endblock %}
+    {% block body %}
+        {# Content #}
+    {% endblock %}
+
+    <script type="text/javascript" src="/static/js/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/yepnope.1.5.4-min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function (){
+            Mustache.tags = ['[[', ']]'];
+            // Load json2.js if we need it
+            yepnope({
+                test: window.JSON,
+                nope: '/static/js/lib/json2.min.js'
+            });
+        });
+    </script>
+    {% block script_0 %}{% endblock %}
+    {% block script %}
+    {% endblock %}
+</body>
+</html>

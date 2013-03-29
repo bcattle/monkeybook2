@@ -1,0 +1,4 @@
+To add a user to a db
+
+   use <db_name>
+   db.addUser(<user>, <pw>)

@@ -1,0 +1,20 @@
+<script type="text/javascript" src="/static/js/lib/modernizr.2.5.3.min.js"></script>
+<script type="text/javascript" src="/static/js/lib/hash.js"></script>
+<script type="text/javascript" src="/static/js/addpage-files.js"></script>
+<script type="text/javascript" src="/static/js/yearbook-ux.js"></script>
+<script type="text/javascript" src="/static/js/yearbook.js"></script>
+<script type="text/javascript">
+    var staticUrl = '/static/';
+
+    // Hide canvas
+    $('#canvas').css({visibility: 'hidden'});
+
+    // Load turn.js
+    yepnope({
+        test : Modernizr.csstransforms,
+        yep: ["/static/js/lib/turn.js' %}"],
+        nope: ["/static/js/lib/turn.html4.min.js", "/static/css/jquery.ui.html4.css", "/static/css/steve-jobs-html4.css"],
+        both: ["/static/css/steve-jobs.css"],
+        complete: loadApp
+    });
+</script>
