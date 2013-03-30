@@ -1,14 +1,18 @@
 from monkeybook.config.common_settings import *
 
 DEBUG = True
+IS_LIVE = False
 
 ## Facebook
 
-SOCIAL_FACEBOOK = {
-    'consumer_key': '111183162379123',
-    'consumer_secret': 'd9afe8c407fd0577883312f8b8b23204'
-}
+# SOCIAL_FACEBOOK['consumer_key'] = '111183162379123',
+# SOCIAL_FACEBOOK['consumer_secret'] = 'd9afe8c407fd0577883312f8b8b23204'
+FB_APP_ID = '111183162379123'
+FB_APP_SECRET = 'd9afe8c407fd0577883312f8b8b23204'
 
+## Mixpanel
+
+MIXPANEL_API_TOKEN = 'd777afd9cbbb0a60d303f18ccd05ce67'
 
 ## Database
 
@@ -26,7 +30,6 @@ MONGO_URI = 'mongodb://%(user)s:%(pass)s@%(host)s:%(port)d/%(db)s' % {
     'port': MONGODB_PORT,
     'db': MONGODB_DB,
 }
-
 
 ## Celery
 

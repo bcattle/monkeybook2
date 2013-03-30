@@ -1,0 +1,115 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+
+{% block style_uncompressed %}
+    <link href='{% static 'css/bootstrap.css' %}' rel='stylesheet' type='text/css'>
+{% endblock %}
+
+{% block style %}
+    <link href="{% static 'css/home.css' %}" type="text/css" rel="stylesheet" media="all" />
+    <link href="{% static 'css/footer.css' %}" rel="stylesheet" type="text/css">
+    <link href="{% static 'css/about.css' %}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block head %}
+    {% include 'django_facebook/_facebook_js.html' %}
+{% endblock %}
+
+{% block script %}
+    <script type="text/javascript" src="{% static 'js/jquery-1.9.0.min.js' %}"></script>
+    <script type="text/javascript">
+        $('.facebook-login').click(function(){
+            F.connect($('#facebook-login-form'));
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    {% include 'includes/connect_form.html' %}
+
+    <div class="top_section">
+        <div class="container">
+
+            {% include 'navbar__preview_editions_how_it_works.html' %}
+
+            <div class="row">
+                <div class="span8 offset5">
+                    {% block pills %}
+                        <ul class="nav nav-pills">
+                            <li class="active"><a href="{% url 'about_us' %}">Our Mission</a></li>
+                            <li><a href="{% url 'contact' %}">Contact Us</a></li>
+                            <li><a href="{% url 'privacy' %}">Privacy</a></li>
+                            <li><a href="{% url 'terms' %}">Terms</a></li>
+                        </ul>
+                    {% endblock %}
+
+                    {% block content %}
+
+                    {#  MISSION  #}
+                    <div style="display:none">
+                        <h1 style="font-size:22pt;text-align:left">What We Do:</h1>
+                        <h2 style="text-align:left;font-size:68pt;line-height:62pt;margin-top:0">
+                            Re-invent the yearbook by making it about you.</h2>
+                    </div>
+
+                    {#  CONTACT US  #}
+                    <div style="display:none">
+                        <h1 style="font-size:22pt;text-align:left;text-shadow: 1px 1px 0 rgba(255, 255, 255, 1);">
+                            Contact Us:</h1>
+                        <div class="contact_us_div">
+                            <h6 style="margin-bottom:0;margin-left:1px">Customer Service</h6>
+                            <p style="text-align:left">service@yearbookallstar.com</p>
+                        </div>
+
+                        <div class="contact_us_div">
+                            <h6 style="margin-bottom:0;margin-left:1px">General Inquiries</h6>
+                            <p style="text-align:left">community@yearbookallstar.com</p>
+                        </div>
+
+                        <div class="contact_us_div">
+                            <h6 style="margin-bottom:0;margin-left:1px">Careers</h6>
+                            <p style="text-align:left">careers@yearbookallstar.com</p>
+                        </div>
+
+                        <div class="contact_us_div">
+                            <h6 style="margin-bottom:0;">Press</h6>
+                            <p style="text-align:left">media@yearbookallstar.com</p>
+                        </div>
+
+                        <div class="contact_us_div">
+                            <h6 style="margin-bottom:0;">Our Address</h6>
+                            <p style="text-align:left">780 Post St, Suite 9,<br>San Francisco, CA 94109</p>
+                        </div>
+
+                    </div>
+
+                    {#  PRIVACY POLICY #}
+
+                    <div style="display:none">
+                        <h3 style="text-align:left">Privacy Policy</h3>
+                        <p style="background-color:whitesmoke; text-align:left; padding:10px">
+                            {% include 'includes/privacy.html' %}
+                        </p>
+                    </div>
+
+
+                    {# TERMS #}
+
+                    <div style="display:non">
+                        <h3 style="text-align:left">Terms of Use</h3>
+                        <p style="background-color:whitesmoke; text-align:left; padding:10px">
+                            {% include 'includes/terms.html' %}
+                        </p>
+                    </div>
+
+                    {% endblock %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+
+{% endblock %}

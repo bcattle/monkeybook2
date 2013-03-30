@@ -1,0 +1,19 @@
+<script type="text/javascript">
+    var LoginModel = Backbone.Model.extend({
+        url: '{{ url_for('api_login') }}'
+    });
+
+    function sendResponse(auth_response) {
+        var responseModel = new LoginModel();
+        responseModel.save(auth_response, {
+            success: function(model, response, options) {
+                // Go to the next page
+                top.location.href = "{{ login_succeeded_url }}";
+            }, error: function(model, xhr, options) {
+                // TODO: show an error message
+                console.log('Failed to send login response');
+            }
+        });
+    }
+</script>
+

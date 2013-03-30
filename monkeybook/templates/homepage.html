@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{#{% from 'social-login.html' import social_login_button %}#}
 
 {% block style %}
     <link href="/static/css/bootstrap.min.css" rel="stylesheet">
@@ -16,6 +17,7 @@
 {% endblock %}
 
 {% block body %}
+    {% include 'includes/facebook-sdk.html' %}
     <div class="row-fluid header monkeybook-bgcolor-darkbrown clear">
         <div class="span7 offset2 monkeybook-landing-logo"></div>
         <div class="span1 headerVerticalAlignCenter">
@@ -34,9 +36,12 @@
   	    <div class="row-fluid clear landing-buttons">	  	    
 			<div class="span3 offset4"><input type="button" class="btn btn-info preview-button"
                                               value="See An Example" /></div>
-			<div class="span2"><input type="button" class="btn btn-success facebook-login"
-                                      value="Test Beta Now" /></div>
-{#			<div class="span2"><input type="button" class="btn btn-success facebook-login" value="Get Started" /></div>#}
+{#			<div class="span2"><input type="button" class="btn btn-success facebook-login"#}
+{#                                      value="Test Beta Now" /></div>#}
+{#            <div class="span2">#}
+{#                {{ social_login_button('facebook', 'Test Beta Now', 'btn btn-success facebook-login') }}#}
+{#            </div>#}
+			<div class="span2"><input type="button" class="btn btn-success facebook-login" value="Get Started" /></div>
 		</div>
 	</div>
 
@@ -49,34 +54,38 @@
 
     <div class="row-fluid header monkeybook-bgcolor-darkbrown clear landing-footer top-margin">
         <div class="span8 offset2">
-{#            <a href="{% url 'about_us' %}">About Us</a>#}
-            <a href="{% url 'privacy' %}">Privacy Policy</a>
-            <a href="{% url 'terms' %}">Terms</a>
-{#            <a href="{% url 'contact' %}">Contact Us</a>#}
+{#            <a href="{{ url_for('about_us') }}">About Us</a>#}
+            <a href="{{ url_for('privacy') }}">Privacy Policy</a>
+            <a href="{{ url_for('terms') }}">Terms</a>
+{#            <a href="{{ url_for('contact') }}">Contact Us</a>#}
         </div>
   	</div>
 
-    {% include 'yearbook-preview.html' %}
+    {% include 'includes/yearbook-preview.html' %}
 {% endblock %}
 
 {% block script %}
-    {% include 'yearbook-preview-js.html' %}
-    {% compress js %}
-        <script type="text/javascript" src="/static/js/lib/jquery.modal.min.js"></script>
-        <script type="text/javascript">
-            $(document).ready(function(){
-                $('.facebook-login').click(function(){
-                    F.connect($('#facebook-login-form'));
-                });
+    {% include 'includes/yearbook-preview-js.html' %}
+    <script type="text/javascript" src="/static/js/lib/jquery.modal.min.js"></script>
+    <script type="text/javascript" src="/static/js/lib/lodash.compat.js"></script>
+    <script type="text/javascript" src="/static/js/lib/backbone.js"></script>
+    {% include 'includes/login-js.html' %}
+    <script type="text/javascript">
+        $(document).ready(function(){
+            $('.facebook-login').click(function(e) {
+                doFacebookLogin();
 
-                $('.preview-button').click(function(){
-                    $('#preview-modal').modal();
-                    $.modal.resize();
-
-                    // Open the book automatically
-                    setTimeout(function () { $('.sj-book').turn('page', 4); }, 3000);
-                });
+                e.preventDefault();
+                return false;
             });
-        </script>
-    {% endcompress %}
+
+            $('.preview-button').click(function(){
+                $('#preview-modal').modal();
+                $.modal.resize();
+
+                // Open the book automatically
+                setTimeout(function () { $('.sj-book').turn('page', 4); }, 3000);
+            });
+        });
+    </script>
 {% endblock %}

@@ -1,0 +1,42 @@
+<div id="fb-root"></div>
+<script type="text/javascript">
+    // Additional JS functions here
+    window.fbAsyncInit = function() {
+        FB.init({
+            appId      : '{{ fb_app_id }}', // App ID
+{#            channelUrl : '//WWW.YOUR_DOMAIN.COM/channel.html', // Channel File#}
+            channelUrl : '//channel.html', // Channel File
+            status     : true, // check login status
+            cookie     : true, // enable cookies to allow the server to access the session
+            xfbml      : false // parse XFBML
+        });
+    };
+
+    // Load the SDK Asynchronously
+    (function(d){
+        var js, id = 'facebook-jssdk', ref = d.getElementsByTagName('script')[0];
+        if (d.getElementById(id)) {return;}
+        js = d.createElement('script'); js.id = id; js.async = true;
+        {% if DEBUG %}
+            js.src = "//connect.facebook.net/en_US/all/debug.js";
+        {% else %}
+            js.src = "//connect.facebook.net/en_US/all.js";
+        {% endif %}
+        ref.parentNode.insertBefore(js, ref);
+    }(document));
+
+    function doFacebookLogin() {
+        FB.login(function(response) {
+            if (response.authResponse) {
+                // connected, POST the signed_request to the server
+                // we don't log to mixpanel here, do it after we've confirmed the token
+                sendResponse(response.authResponse);
+            } else {
+                // TODO: show a modal if they cancelled?
+                mixpanel.track("Login Cancelled", {"provider": "facebook"});
+            }
+        },{
+            scope: "{{ fb_scope }}"
+        });
+    }
+</script>

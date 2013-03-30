@@ -1,0 +1,47 @@
+{% extends 'static_informational.html' %}
+{% load staticfiles %}
+
+
+{% block pills %}
+    <ul class="nav nav-pills">
+        <li><a href="{% url 'about_us' %}">Our Mission</a></li>
+        <li class="active"><a href="{% url 'contact' %}">Contact Us</a></li>
+        <li><a href="{% url 'privacy' %}">Privacy</a></li>
+        <li><a href="{% url 'terms' %}">Terms</a></li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+
+{#  CONTACT US  #}
+<div>
+    <h1 style="font-size:22pt;text-align:left;text-shadow: 1px 1px 0 rgba(255, 255, 255, 1);">
+        Contact Us:</h1>
+    <div class="contact_us_div">
+        <h6 style="margin-bottom:0;margin-left:1px">Customer Service</h6>
+        <p style="text-align:left">service@yearbookallstar.com</p>
+    </div>
+
+    <div class="contact_us_div">
+        <h6 style="margin-bottom:0;margin-left:1px">General Inquiries</h6>
+        <p style="text-align:left">community@yearbookallstar.com</p>
+    </div>
+
+    <div class="contact_us_div">
+        <h6 style="margin-bottom:0;margin-left:1px">Careers</h6>
+        <p style="text-align:left">careers@yearbookallstar.com</p>
+    </div>
+
+    <div class="contact_us_div">
+        <h6 style="margin-bottom:0;">Press</h6>
+        <p style="text-align:left">media@yearbookallstar.com</p>
+    </div>
+
+    <div class="contact_us_div">
+        <h6 style="margin-bottom:0;">Our Address</h6>
+        <p style="text-align:left">780 Post St, Suite 9,<br>San Francisco, CA 94109</p>
+    </div>
+
+</div>
+
+{% endblock %}

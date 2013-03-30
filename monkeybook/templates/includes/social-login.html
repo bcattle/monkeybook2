@@ -1,0 +1,6 @@
+{# e.g. {{ show_provider_button('facebook', 'Log in with Facebook', 'facebook-btn') }} #}
+{% macro social_login_button(provider_id, label, classes) %}
+    <form action="{{ url_for('social.login', provider_id=provider_id) }}" method="POST">
+        <input type="submit" class="{{ classes }}" value="{{ label }}" />
+    </form>
+{% endmacro %}

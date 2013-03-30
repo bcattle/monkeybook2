@@ -1,0 +1,23 @@
+{% extends 'static_informational.html' %}
+{% load staticfiles %}
+
+
+{% block pills %}
+    <ul class="nav nav-pills">
+        <li class="active"><a href="{% url 'about_us' %}">Our Mission</a></li>
+        <li><a href="{% url 'contact' %}">Contact Us</a></li>
+        <li><a href="{% url 'privacy' %}">Privacy</a></li>
+        <li><a href="{% url 'terms' %}">Terms</a></li>
+    </ul>
+{% endblock %}
+
+{% block content %}
+
+{#  MISSION  #}
+<div>
+    <h1 style="font-size:22pt;text-align:left">What We Do:</h1>
+    <h2 style="text-align:left;font-size:68pt;line-height:62pt;margin-top:0">
+        Re-invent the yearbook by making it about you.</h2>
+</div>
+
+{% endblock %}

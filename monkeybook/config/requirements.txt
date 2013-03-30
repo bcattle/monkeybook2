@@ -1,8 +1,11 @@
 ipython
 ipdb
+yolk
 flask
 Flask-PyMongo
-Flask-Social
+Flask-Login
 flask_mongoengine
 facebook-sdk
 celery-with-mongodb
+flask-seasurf
+raven

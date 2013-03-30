@@ -37,11 +37,12 @@
         {# Content #}
     {% endblock %}
 
-    <script type="text/javascript" src="/static/js/jquery-1.9.1.min.js"></script>
-    <script type="text/javascript" src="/static/js/yepnope.1.5.4-min.js"></script>
+    <script type="text/javascript" src="/static/js/lib/jquery-1.9.1.min.js"></script>
+    <script type="text/javascript" src="/static/js/lib/yepnope.1.5.4-min.js"></script>
+    {% if IS_LIVE %}{% include 'includes/ga.html' %}{% endif %}
+    {% include 'includes/mixpanel.html' %}
     <script type="text/javascript">
         $(document).ready(function (){
-            Mustache.tags = ['[[', ']]'];
             // Load json2.js if we need it
             yepnope({
                 test: window.JSON,
