@@ -9,3 +9,5 @@ facebook-sdk
 celery-with-mongodb
 flask-seasurf
 raven
+blinker
+Flask-Script

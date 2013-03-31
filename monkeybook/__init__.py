@@ -1,6 +1,6 @@
 from flask import Flask
 from flask.ext.mongoengine import MongoEngine
-from flask.ext.login import LoginManager
+from flask.ext.login import LoginManager, logout_user
 from flask.ext.seasurf import SeaSurf
 from raven.contrib.flask import Sentry
 
@@ -22,7 +22,11 @@ login_manager.init_app(app)
 
 @login_manager.user_loader
 def load_user(userid):
-    return Users.objects.get(userid)
+    try:
+        return Users.objects.get(userid)
+    except DoesNotExist:
+        # User got deleted, log them out
+        logout_user()
 
 from monkeybook.views import *
 

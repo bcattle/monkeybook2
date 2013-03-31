@@ -10,7 +10,7 @@ FB_ID_FIELD_LENGTH = 30
 class AccessToken(EmbeddedDocument):
     provider = StringField(max_length=255, required=True)
     access_token = StringField(max_length=255, required=True)
-    secret = StringField(max_length=255, required=True)
+    # secret = StringField(max_length=255, required=True)
 
 
 class FamilyMember(EmbeddedDocument):
@@ -29,10 +29,10 @@ class FacebookFriend(EmbeddedDocument):
 
 class Users(Document, UserMixin):
     fb_id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
-    email = EmailField(unique=True, max_length=255)
-    username = StringField(unique=True, max_length=255)
+    email = EmailField(max_length=255)
+    username = StringField(max_length=255)
     active = BooleanField(default=True)
-    access_tokens = EmbeddedDocumentField(AccessToken)
+    access_tokens = ListField(EmbeddedDocumentField(AccessToken))
     locale = StringField(max_length=10)
 
     name = StringField(max_length=255)
@@ -40,7 +40,7 @@ class Users(Document, UserMixin):
     gender = StringField(max_length=1)
     pic_square = StringField(max_length=255)
     pic_square_large = StringField(max_length=255)
-    friends = EmbeddedDocumentField(FacebookFriend)
+    friends = ListField(EmbeddedDocumentField(FacebookFriend))
 
     stripe_customer_id = StringField(max_length=255)
     logins = ListField(DateTimeField)
@@ -48,6 +48,10 @@ class Users(Document, UserMixin):
     meta = {
         'indexes': ['fb_id']
     }
+
+    # def get_fb_api(self):
+    #     latest_access_token = self.access_tokens.
+    #     return GraphAPI(latest_access_token)
 
 
 class UserTasks(Document):
@@ -75,7 +79,7 @@ class Address(EmbeddedDocument):
 class Orders(Document):
     user = ReferenceField(Users, required=True)
     stripe_single_use_token = StringField(max_length=255, required=True)
-    items = EmbeddedDocumentField(CartItem)
+    items = ListField(EmbeddedDocumentField(CartItem))
     tax = DecimalField(default=Decimal(0))
     charged_total = DecimalField(default=Decimal(0))
     shipping_address = EmbeddedDocumentField(Address)
@@ -103,9 +107,9 @@ class Photo(EmbeddedDocument):
     height = IntField(required=True)
     width = IntField(required=True)
     url = URLField(required=True)
-    all_sizes = EmbeddedDocumentField(PhotoSize)
+    all_sizes = ListField(EmbeddedDocumentField(PhotoSize))
     caption = StringField(max_length=255, required=True)
-    comments = EmbeddedDocumentField(PhotoComment)
+    comments = ListField(EmbeddedDocumentField(PhotoComment))
     tags = ListField(StringField)
     score = IntField(default=0)
 
@@ -132,13 +136,13 @@ class Books(Document):
 
     relationship_status = StringField(max_length=10)
     significant_other_id = StringField(max_length=FB_ID_FIELD_LENGTH)
-    family = EmbeddedDocumentField(FamilyMember)
-    friends = EmbeddedDocumentField(FacebookFriend)      # Repeated here because each book might have different scoring
-    photos = EmbeddedDocumentField(Photo)
-    top_posts = EmbeddedDocumentField(WallPost)
-    birthday_posts = EmbeddedDocumentField(WallPost)
+    family = ListField(EmbeddedDocumentField(FamilyMember))
+    friends = ListField(EmbeddedDocumentField(FacebookFriend))      # Repeated here because each book might have different scoring
+    photos = ListField(EmbeddedDocumentField(Photo))
+    top_posts = ListField(EmbeddedDocumentField(WallPost))
+    birthday_posts = ListField(EmbeddedDocumentField(WallPost))
 
-    pages = EmbeddedDocumentField(BookPage)
+    pages = ListField(EmbeddedDocumentField(BookPage))
 
     mega = {
         'ordering': ['user', '-created']

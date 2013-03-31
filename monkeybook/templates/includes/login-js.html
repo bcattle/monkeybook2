@@ -7,11 +7,21 @@
         var responseModel = new LoginModel();
         responseModel.save(auth_response, {
             success: function(model, response, options) {
+                // Log the event to mixpanel
+                if (response['new_user']) {
+                    var message = "New user logged in";
+                } else {
+                    var message = "Returning user logged in";
+                }
+                mixpanel.track(message, {"provider": "facebook", "user_id": model.get('userID')});
+
                 // Go to the next page
                 top.location.href = "{{ login_succeeded_url }}";
             }, error: function(model, xhr, options) {
                 // TODO: show an error message
-                console.log('Failed to send login response');
+                console.log('Failed sending login response');
+                // For consistency, log the user out of the app
+                FB.logout();
             }
         });
     }

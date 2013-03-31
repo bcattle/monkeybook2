@@ -1,4 +1,9 @@
 
+## Celery
+
+CELERY_DISABLE_RATE_LIMITS = True
+
+
 ## Security
 
 SECRET_KEY = '\x89)_\x9d\xb2:\xd9}\xe4<G*\x00\x02\x89K\x1f\xc5\x81\xf5\xadVB\x10'
@@ -6,7 +11,7 @@ SECRET_KEY = '\x89)_\x9d\xb2:\xd9}\xe4<G*\x00\x02\x89K\x1f\xc5\x81\xf5\xadVB\x10
 SECURITY_PASSWORD_HASH = 'pbkdf2_sha512'
 SECURITY_PASSWORD_SALT = '|4l\x05pK\xba\xb4\x00\x8f\xe9\xc6\xee\xd6MHth\xa9^=n\xeb\xf2\x07\xcb\xa7\x87\xcf\xc1Y3'
 
-CSRF_COOKIE_NAME = 'csrf_token'
+CSRF_COOKIE_NAME = 'csrftoken'
 
 
 ## Facebook
