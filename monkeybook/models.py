@@ -1,8 +1,8 @@
 import datetime
 from decimal import Decimal
+from facebook import GraphAPI
 from flask.ext.login import UserMixin
 from mongoengine import *
-from monkeybook import app, db
 
 FB_ID_FIELD_LENGTH = 30
 
@@ -10,52 +10,68 @@ FB_ID_FIELD_LENGTH = 30
 class AccessToken(EmbeddedDocument):
     provider = StringField(max_length=255, required=True)
     access_token = StringField(max_length=255, required=True)
-    # secret = StringField(max_length=255, required=True)
+    created = DateTimeField(default=lambda: datetime.datetime.utcnow())
+
+    meta = {
+        'ordering': ['-created']
+    }
 
 
 class FamilyMember(EmbeddedDocument):
-    fb_id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
+    id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     relationship = StringField(max_length=10)
 
 
 class FacebookFriend(EmbeddedDocument):
-    fb_id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
+    id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     name = StringField(max_length=255)
     first_name = StringField(max_length=50)
-    gender = StringField(max_length=1)
+    sex = StringField(max_length=10)
     pic_square = StringField(max_length=255)
     top_friends_score = IntField(default=0)
 
+    meta = {
+        'indexes': ['id']
+    }
 
-class Users(Document, UserMixin):
-    fb_id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
+
+class User(Document, UserMixin):
+    id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     email = EmailField(max_length=255)
     username = StringField(max_length=255)
     active = BooleanField(default=True)
-    access_tokens = ListField(EmbeddedDocumentField(AccessToken))
+    access_tokens = SortedListField(EmbeddedDocumentField(AccessToken))
     locale = StringField(max_length=10)
 
     name = StringField(max_length=255)
     first_name = StringField(max_length=50)
-    gender = StringField(max_length=1)
+    sex = StringField(max_length=50)
+    affiliations = ListField(DictField())
+    age_range = DictField()
+    location = DictField()
     pic_square = StringField(max_length=255)
     pic_square_large = StringField(max_length=255)
+
+    relationship_status = StringField(max_length=10)
+    significant_other_id = StringField(max_length=FB_ID_FIELD_LENGTH)
     friends = ListField(EmbeddedDocumentField(FacebookFriend))
+    family = ListField(EmbeddedDocumentField(FamilyMember))
 
     stripe_customer_id = StringField(max_length=255)
     logins = ListField(DateTimeField)
 
     meta = {
-        'indexes': ['fb_id']
+        'indexes': ['id']
     }
 
-    # def get_fb_api(self):
-    #     latest_access_token = self.access_tokens.
-    #     return GraphAPI(latest_access_token)
+    def get_fb_api(self):
+        # Access_tokens is a SortedListField, so we just index it
+        latest_access_token = self.access_tokens[0].access_token
+        return GraphAPI(latest_access_token)
 
 
-class UserTasks(Document):
-    user = ReferenceField(Users, required=True)
+class UserTask(Document):
+    user = ReferenceField(User, required=True)
     task_name = StringField(max_length=255, required=True)
     task_id = StringField(max_length=255, required=True)
     # created = ObjectID().getTimestamp()
@@ -76,8 +92,8 @@ class Address(EmbeddedDocument):
     postal = StringField(max_length=20, required=True)
 
 
-class Orders(Document):
-    user = ReferenceField(Users, required=True)
+class Order(Document):
+    user = ReferenceField(User, required=True)
     stripe_single_use_token = StringField(max_length=255, required=True)
     items = ListField(EmbeddedDocumentField(CartItem))
     tax = DecimalField(default=Decimal(0))
@@ -102,7 +118,7 @@ class PhotoComment(EmbeddedDocument):
 
 
 class Photo(EmbeddedDocument):
-    fb_id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
+    id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     people_in_photo = ListField(StringField)
     height = IntField(required=True)
     width = IntField(required=True)
@@ -114,6 +130,7 @@ class Photo(EmbeddedDocument):
     score = IntField(default=0)
 
     meta = {
+        'indexes': ['id'],
         'ordering': ['-score']
     }
 
@@ -129,14 +146,11 @@ class BookPage(DynamicEmbeddedDocument):
     # Whatever fields the page needs
 
 
-class Books(Document):
-    user = ReferenceField(Users, required=True)
+class Book(Document):
+    user = ReferenceField(User, required=True)
     book_type = StringField(max_length=20, required=True)
     created = DateTimeField(default=lambda: datetime.datetime.utcnow())
 
-    relationship_status = StringField(max_length=10)
-    significant_other_id = StringField(max_length=FB_ID_FIELD_LENGTH)
-    family = ListField(EmbeddedDocumentField(FamilyMember))
     friends = ListField(EmbeddedDocumentField(FacebookFriend))      # Repeated here because each book might have different scoring
     photos = ListField(EmbeddedDocumentField(Photo))
     top_posts = ListField(EmbeddedDocumentField(WallPost))
@@ -144,19 +158,23 @@ class Books(Document):
 
     pages = ListField(EmbeddedDocumentField(BookPage))
 
-    mega = {
+    meta = {
         'ordering': ['user', '-created']
     }
 
 
-class FqlResults(Document):
+class FqlResult(Document):
     """
     Holds the results of an individual FQL query
     run for a user
     """
-    user = ReferenceField(Users, required=True)
+    user = ReferenceField(User, required=True)
     created = DateTimeField(default=lambda: datetime.datetime.utcnow())
     query_type = StringField(max_length=20, required=True)
-    query_string = StringField(max_length=1000, required=True)
+    query = StringField(max_length=1000, required=True)
     results = DynamicField(required=True)
 
+    meta = {
+        'indexes': ['user', ('user', 'query_type'), ('user', 'query')],
+        'ordering': ['user', 'query', '-created']
+    }

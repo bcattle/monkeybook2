@@ -5,8 +5,6 @@ IS_LIVE = False
 
 ## Facebook
 
-# SOCIAL_FACEBOOK['consumer_key'] = '111183162379123',
-# SOCIAL_FACEBOOK['consumer_secret'] = 'd9afe8c407fd0577883312f8b8b23204'
 FB_APP_ID = '111183162379123'
 FB_APP_SECRET = 'd9afe8c407fd0577883312f8b8b23204'
 
@@ -44,3 +42,10 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
     "taskmeta_collection": "celery_taskmeta",
 }
 
+CELERY_IMPORTS = ('monkeybook.tasks',)
+
+# CELERYD_POOL = 'celery.concurrency.gevent.TaskPool'
+CELERYD_POOL = 'gevent'
+CELERYD_CONCURRENCY = 10000
+
+CELERY_SEND_EVENTS = True
