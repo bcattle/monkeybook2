@@ -52,12 +52,11 @@ class TaggedWithMeTask(FQLTask):
         """
         # We *don't* want to collapse on the object_id field here
         # 2/20: sometimes the `created` field comes back None
-        # for some people
         getter = ResultGetter(
             results,
             auto_id_field=True,
             fields=['subject', 'created'],
-            integer_fields=['object_id', 'subject'],
+            # integer_fields=['object_id', 'subject'],
             timestamps=['created'],
             defaults={'created': datetime.datetime(2012 - 2, 1, 1, tzinfo=utc)},
             )

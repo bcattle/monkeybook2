@@ -1,7 +1,7 @@
+import datetime
 from collections import defaultdict
-from copy import copy
-import logging, datetime
 from pytz import utc
+from monkeybook import app
 from monkeybook.utils import merge_dicts
 
 
@@ -134,7 +134,10 @@ class ResultGetter(object):
     def __iter__(self):
         return self.fields.__iter__()
 
-    def __init__(self, results, id_field='object_id', auto_id_field=False, id_is_int=True,
+    def __getitem__(self, item):
+        return self.fields.__getitem__(item)
+
+    def __init__(self, results, id_field='object_id', auto_id_field=False, id_is_int=False,
                  fields=None, field_names=None, defaults=None, optional_fields=None, timestamps=None,
                  integer_fields=None, extra_fields=None):
         """
@@ -144,7 +147,7 @@ class ResultGetter(object):
                         extra_fields={'likes_and_comments': lambda x: x['like_count'] + x['comment_count']}
         """
         self._ids = None
-        if settings.DEBUG:
+        if app.config['DEBUG']:
             fail_silently = False
             self._fields_by_id = {}
         else:
@@ -175,7 +178,7 @@ class ResultGetter(object):
                     if id_is_int:
                         curr_id = int(curr_result[id_field])      # fail if no id or not an int
                     else:
-                        curr_id = curr_result[id_field]         # fail if no id
+                        curr_id = str(curr_result[id_field])      # fail if no id
                 for field in fields:
                     f = field.split('.')
                     try:
@@ -276,7 +279,7 @@ class FreqDistResultGetter(ResultGetter):
         """
         Elements that occur less-frequently than `cutoff` are discarded
         """
-        fail_silently = not settings.DEBUG
+        fail_silently = not app.config['DEBUG']
         self._ids = None
         self._ordered = {}
 
@@ -310,7 +313,7 @@ def process_photo_results(results, scoring_fxn=None,
     """
     fields = ['created', 'height', 'width', 'fb_url',
               'comment_info.comment_count', 'like_info.like_count',
-              'all_sizes']      # <--- added in _set_photo_by_width
+              'images']
     integer_fields = ['height', 'width', 'comment_info.comment_count',
                       'like_info.like_count']
     if add_to_fields:
@@ -318,7 +321,6 @@ def process_photo_results(results, scoring_fxn=None,
     add_to_defaults = add_to_defaults or {}
 
     fb_results = len(results)
-    results = _set_photo_by_width(results)
     extra_fields = {}
     if scoring_fxn:
         extra_fields['score'] = scoring_fxn
@@ -335,44 +337,9 @@ def process_photo_results(results, scoring_fxn=None,
 
     getter_results = len(getter)
     if fb_results != getter_results:
-        logger.warning('Facebook returned %d results, our getter only produced %d' % (fb_results, getter_results))
+        app.logger.warning('Facebook returned %d results, our getter only produced %d' % (fb_results, getter_results))
     #    else:
     #        logger.info('Pulled %d photos' % getter_results)
     if commit:
         FacebookPhoto.objects.from_getter(getter)
     return getter
-
-
-def _set_photo_by_width(results):
-    """
-    Handle the fact that the `images` struct
-    has a few values.
-    We want the smallest > PHOTO_WIDTH_DESIRED or
-    the largest otherwise
-    """
-    processed_results = []
-    for photo in results:
-        try:
-            new_photo = copy(photo)
-            images = {image['width']: image for image in photo['images']}
-            widths = sorted(images.keys(), reverse=True)
-            above_cutoff = filter(lambda x: x > PHOTO_WIDTH_DESIRED, widths)
-            if above_cutoff:
-                chosen_width = above_cutoff[-1]
-            else:
-                # If none large enough, take the largest
-                chosen_width = widths[0]
-            new_photo['height'] = images[chosen_width]['height']
-            new_photo['width'] = images[chosen_width]['width']
-            new_photo['fb_url'] = images[chosen_width]['source']
-            new_photo['all_sizes'] = photo['images']
-            del new_photo['images']
-            # Dumb: convert field 'source' in 'images' to name 'url'
-            for image in new_photo['all_sizes']:
-                image['url'] = image['source']
-                del image['source']
-            processed_results.append(new_photo)
-        except KeyError:
-            logger.warning('KeyError in _set_photo_by_width')
-            continue
-    return processed_results

@@ -3,7 +3,9 @@ from blinker import Namespace
 from flask.ext.login import current_user
 from monkeybook import app
 from monkeybook.fql.profile import ProfileFieldsTask, SquareProfilePicTask
-from monkeybook.tasks import RunFqlTask, ExtendAccessTokenTask
+from monkeybook.tasks.fql import RunFqlTask
+from monkeybook.tasks.profile import ExtendAccessTokenTask
+from monkeybook.tasks.top_friends import TopFriendsTask
 
 namespace = Namespace()
 
@@ -22,7 +24,8 @@ def on_user_created(sender, user_id, provider, **extra):
     # Extend their access token
     ExtendAccessTokenTask().apply_async(kwargs={'user_id': user_id,})
 
-    # Pull their friends
+    # Run the pull their friends and calculate top friends w/ simple calculation
+    TopFriendsTask().apply_async(kwargs={'user_id': user_id,})
 
     # Associate the user with that username in Mixpanel
     pass

@@ -12,10 +12,6 @@ class AccessToken(EmbeddedDocument):
     access_token = StringField(max_length=255, required=True)
     created = DateTimeField(default=lambda: datetime.datetime.utcnow())
 
-    meta = {
-        'ordering': ['-created']
-    }
-
 
 class FamilyMember(EmbeddedDocument):
     id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
@@ -40,7 +36,7 @@ class User(Document, UserMixin):
     email = EmailField(max_length=255)
     username = StringField(max_length=255)
     active = BooleanField(default=True)
-    access_tokens = SortedListField(EmbeddedDocumentField(AccessToken))
+    access_tokens = SortedListField(EmbeddedDocumentField(AccessToken), ordering='created')
     locale = StringField(max_length=10)
 
     name = StringField(max_length=255)
@@ -66,8 +62,11 @@ class User(Document, UserMixin):
 
     def get_fb_api(self):
         # Access_tokens is a SortedListField, so we just index it
-        latest_access_token = self.access_tokens[0].access_token
+        latest_access_token = self.access_tokens[-1].access_token
         return GraphAPI(latest_access_token)
+
+    def get_id_str(self):
+        return self.username or self.id
 
 
 class UserTask(Document):
