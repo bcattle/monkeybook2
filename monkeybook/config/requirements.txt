@@ -13,3 +13,5 @@ blinker
 Flask-Script
 pytz
 gevent
+#git+git://github.com/kevinastone/mixpanel-celery.git
+flask-restful>=0.2.1

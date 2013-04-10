@@ -57,3 +57,13 @@ def template_extras():
         'DEBUG': app.config['DEBUG'],
         'IS_LIVE': app.config['IS_LIVE']
     }
+
+## API
+
+#api_app = Flask('monkeybook_api')
+#api_app.config.from_object(MONKEYBOOK_SETTINGS)
+# Dispatcher already adds "/api"
+
+api = Api(app, prefix='/api/user/<int:fb_id>')
+
+from monkeybook.resources import *
