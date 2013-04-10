@@ -1,8 +1,8 @@
 import datetime
 from decimal import Decimal
-from facebook import GraphAPI
 from flask.ext.login import UserMixin
 from mongoengine import *
+from facebook import GraphAPI
 
 FB_ID_FIELD_LENGTH = 30
 
@@ -16,19 +16,6 @@ class AccessToken(EmbeddedDocument):
 class FamilyMember(EmbeddedDocument):
     id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     relationship = StringField(max_length=10)
-
-
-class FacebookFriend(EmbeddedDocument):
-    id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
-    name = StringField(max_length=255)
-    first_name = StringField(max_length=50)
-    sex = StringField(max_length=10)
-    pic_square = StringField(max_length=255)
-    top_friends_score = IntField(default=0)
-
-    meta = {
-        'indexes': ['id']
-    }
 
 
 class User(Document, UserMixin):
@@ -50,11 +37,18 @@ class User(Document, UserMixin):
 
     relationship_status = StringField(max_length=10)
     significant_other_id = StringField(max_length=FB_ID_FIELD_LENGTH)
-    friends = ListField(EmbeddedDocumentField(FacebookFriend))
+    # friends = ListField(EmbeddedDocumentField(FacebookFriend))
     family = ListField(EmbeddedDocumentField(FamilyMember))
 
     stripe_customer_id = StringField(max_length=255)
     logins = ListField(DateTimeField)
+
+    def __unicode__(self):
+        return self.name
+
+    @property
+    def friends(self):
+        return FacebookFriend.objects(user=self)
 
     meta = {
         'indexes': ['id']
@@ -150,16 +144,42 @@ class Book(Document):
     book_type = StringField(max_length=20, required=True)
     created = DateTimeField(default=lambda: datetime.datetime.utcnow())
 
-    friends = ListField(EmbeddedDocumentField(FacebookFriend))      # Repeated here because each book might have different scoring
+    # friends = ListField(EmbeddedDocumentField(FacebookFriend))      # Repeated here because each book might have different scoring
     photos = ListField(EmbeddedDocumentField(Photo))
     top_posts = ListField(EmbeddedDocumentField(WallPost))
     birthday_posts = ListField(EmbeddedDocumentField(WallPost))
 
     pages = ListField(EmbeddedDocumentField(BookPage))
 
+    @property
+    def friends(self):
+        return FacebookFriend.objects(book=self)
+
     meta = {
         'ordering': ['user', '-created']
     }
+
+
+class FacebookFriend(Document):
+    # Associated with *either* a user or a book
+    user = ReferenceField(User)
+    book = ReferenceField(Book)
+
+    uid = StringField(max_length=FB_ID_FIELD_LENGTH, required=True)     # NOT the primary key
+    name = StringField(max_length=255, required=True)
+    name_uppercase = StringField(max_length=255, required=True)
+    first_name = StringField(max_length=50)
+    sex = StringField(max_length=10)
+    pic_square = StringField(max_length=255)
+    top_friends_score = IntField(default=0)
+
+    meta = {
+        'indexes': [('user', 'name_uppercase'), ('book', 'name_uppercase')],
+        'ordering': ['user', '-top_friends_score']
+    }
+
+    def __unicode__(self):
+        return self.name
 
 
 class FqlResult(Document):

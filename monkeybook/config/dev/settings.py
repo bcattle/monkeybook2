@@ -42,10 +42,13 @@ CELERY_MONGODB_BACKEND_SETTINGS = {
     "taskmeta_collection": "celery_taskmeta",
 }
 
-CELERY_IMPORTS = ('monkeybook.tasks',)
+CELERY_IMPORTS = (
+    'monkeybook.tasks.fql',
+    'monkeybook.tasks.profile',
+    'monkeybook.tasks.top_friends',
+)
 
-# CELERYD_POOL = 'celery.concurrency.gevent.TaskPool'
 CELERYD_POOL = 'gevent'
-CELERYD_CONCURRENCY = 10000
+CELERYD_CONCURRENCY = 1000
 
 CELERY_SEND_EVENTS = True
