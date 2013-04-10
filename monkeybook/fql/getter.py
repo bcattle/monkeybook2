@@ -8,6 +8,17 @@ from monkeybook.utils import merge_dicts
 class BlankFieldException(Exception):
     pass
 
+class DefaultBlankDict(dict):
+    """
+    This is an alternative to using a regular `defaultdict`
+    because we can't pickle it if it's an instance variable of a class
+    """
+    def __getitem__(self, item):
+        try:
+            return super(DefaultBlankDict, self).__getitem__(item)
+        except KeyError:
+            return ''
+
 class ResultGetter(object):
     """
     An error-tolerant helper class that simplifies
@@ -152,7 +163,7 @@ class ResultGetter(object):
             self._fields_by_id = {}
         else:
             fail_silently = True
-            self._fields_by_id = defaultdict(lambda: '')
+            self._fields_by_id = DefaultBlankDict()
         self._ordered = {}
 
         fields = fields or []

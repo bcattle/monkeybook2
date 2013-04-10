@@ -25,15 +25,13 @@ def api_login():
         try:
             user = User.objects.get(id=user_id)
             new_user = False
-            # Fire the signal
-            user_logged_in.send(current_app._get_current_object(), user_id=user_id, provider=provider)
+            signal = user_logged_in
 
         except DoesNotExist:
             # Create an account for the user
             user = User(id=user_id)
             new_user = True
-            # Fire the signal. This will pull their profile
-            user_created.send(current_app._get_current_object(), user_id=user_id, provider=provider)
+            signal = user_created
 
         # Save the access token
         token = AccessToken(
@@ -45,6 +43,9 @@ def api_login():
 
         # Log the user in
         login_user(user)
+
+        # Run the signal handler. If new user, this will pull their profile
+        signal.send(current_app._get_current_object(), user_id=user_id, provider=provider)
 
         # Return success
         return Response(json.dumps({'new_user': new_user}), status=201, mimetype='application/json')

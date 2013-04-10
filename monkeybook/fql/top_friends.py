@@ -19,16 +19,10 @@ class GetFriendsTask(FQLTask):
         getter = ResultGetter(
             results,
             fields=['first_name', 'name', 'pic_square', 'sex'],
-            id_field='uid'
+            id_field='uid',
+            extra_fields={'name_uppercase': lambda x: x['name'].upper()}
         )
         return getter
-
-    def save(self, results):
-        self.user.friends = []
-        for friend in results:
-            friend['id'] = friend.pop('uid')
-            self.user.friends.append(FacebookFriend(**friend))
-        self.user.save()
 
 
 class TaggedWithMeTask(FQLTask):

@@ -1,11 +1,23 @@
-from monkeybook import celery
+
+# from monkeybook.tasks.fql import *
+# from monkeybook.tasks.profile import *
+# from monkeybook.tasks.top_friends import *
+
 from monkeybook.models import User, UserTask
 
+# from celery import Celery
+# celery = Celery()
+# Task = celery.create_task_cls()
 
+from monkeybook import celery
+
+# class LoggedUserTask(Task):
 class LoggedUserTask(celery.Task):
     """
     A task that logs itself to the database
     """
+    abstract = True
+
     def apply_async(self, *args, **kwargs):
         # Enqueue the task
         async_result = super(LoggedUserTask, self).apply_async(*args, **kwargs)

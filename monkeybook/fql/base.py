@@ -1,6 +1,6 @@
 import re
 from monkeybook import app
-from monkeybook.getter import ResultGetter, process_photo_results
+from monkeybook.fql.getter import ResultGetter, process_photo_results
 from monkeybook.models import FqlResult
 from monkeybook.utils import merge_spaces
 
