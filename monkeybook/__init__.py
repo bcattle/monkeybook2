@@ -30,7 +30,7 @@ login_manager.init_app(app)
 @login_manager.user_loader
 def load_user(userid):
     try:
-        return User.objects.get(userid)
+        return User.objects.get(id=userid)
     except DoesNotExist:
         # User got deleted, log them out
         logout_user()

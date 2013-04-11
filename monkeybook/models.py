@@ -44,7 +44,7 @@ class User(Document, UserMixin):
     logins = ListField(DateTimeField)
 
     def __unicode__(self):
-        return self.name
+        return self.name or ''
 
     @property
     def friends(self):
@@ -67,7 +67,12 @@ class UserTask(Document):
     user = ReferenceField(User, required=True)
     task_name = StringField(max_length=255, required=True)
     task_id = StringField(max_length=255, required=True)
-    # created = ObjectID().getTimestamp()
+    created = DateTimeField(default=lambda: datetime.datetime.utcnow())
+
+    meta = {
+        'indexes': ['user', 'task_name'],
+        'ordering': ['-created'],
+    }
 
 
 class CartItem(EmbeddedDocument):

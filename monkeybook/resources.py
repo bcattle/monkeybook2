@@ -1,10 +1,10 @@
-import urllib
+import urllib, datetime
 from flask import abort, request
 from flask.ext.login import current_user
 from flask.ext.restful import Resource as RestfulResource
 from werkzeug.datastructures import MultiDict
-from monkeybook import api
-from monkeybook.models import FacebookFriend, Book
+from monkeybook import api, app, celery
+from monkeybook.models import FacebookFriend, Book, User, UserTask
 
 
 PER_PAGE = 20
@@ -97,7 +97,7 @@ class CurrentUserResource(RestfulResource, CurrentUserMixin):
     #     return queryset
 
 
-class ListMixin(CurrentUserResource):
+class ListMixin(object):
     def _make_response_data(self, data):
         # Generate a list with the desired fields
         response_data = []
@@ -115,6 +115,7 @@ class ListMixin(CurrentUserResource):
 
 class FriendResource(CurrentUserResource, ListMixin):
     fields = {'id', 'name', 'pic_square', 'top_friends_score'}
+    depends_on_task = 'monkeybook.tasks.top_friends.top_friends_task'
 
     def get_matching_friends(self):
         user = current_user._get_current_object()
@@ -129,20 +130,28 @@ class FriendResource(CurrentUserResource, ListMixin):
         return self.get_matching_friends()
 
 
-# TODO: perform this with a map/reduce
+# TODO: perform this with a map/reduce?
 class FriendInAppResource(FriendResource):
-    def get_queryset(self):
-        friends = self.get_matching_friends()
+    def get_friend_ids_in_app(self):
         # Need to return `friends` that have a User document
-        pass
+        friend_ids = self.get_matching_friends().scalar('uid')
+        # User models having those ids
+        return User.objects(id__in=friend_ids).sclar('id')
+
+    def get_queryset(self):
+        # User models having those ids
+        friend_ids_in_app = self.get_friend_ids_in_app()
+        # Friend models with those ids
+        return FacebookFriend.objects(uid__in=friend_ids_in_app)
 
 
 # TODO: perform this with a map/reduce
-class FriendNotInAppResource(FriendResource):
+class FriendNotInAppResource(FriendInAppResource):
     def get_queryset(self):
-        friends = self.get_matching_friends()
-        # Need to return `friends` that DO NOT have a User document
-        pass
+        # User models having those ids
+        friend_ids_in_app = self.get_friend_ids_in_app()
+        # Friend models with those ids
+        return FacebookFriend.objects(uid__nin=friend_ids_in_app)
 
 
 class FriendBooksResource(FriendResource):
@@ -151,13 +160,62 @@ class FriendBooksResource(FriendResource):
     def get_queryset(self):
         friend_ids = self.get_matching_friends().scalar('uid')
         # Need to return Books belonging to these friends
-        return Book.objects(user_id__in=friend_ids)         # <-- this is wrong, figure out how to filter by user.id
+        return Book.objects(__raw__={ 'user.$id': {'$in': list(friend_ids)}})
 
         # TODO: clever ordering here -- friend order, book created
 
 
+TASK_STALE_MINS = 10
 
+class ProgressResource(RestfulResource, CurrentUserMixin):
+    def is_authorized(self, fb_id):
+        return self.is_current_user(fb_id)
+
+    def get(self, fb_id):
+        if not self.is_authorized(fb_id):
+            abort(403)
+
+        user = current_user._get_current_object()
+
+        # We use the url to decide which Resource the user is targeting
+        resource_url = request.path.rsplit('/progress', 1)[0]
+        adapter = app.create_url_adapter(request)
+        endpoint = adapter.match(resource_url)[0]
+        resource_class = app.view_functions[endpoint].view_class
+
+        task_name = getattr(resource_class, 'depends_on_task')
+        if task_name is None:
+            raise AttributeError('Can\'t get progress of a task without the attr `depends_on_task`')
+
+        # Check the UserTask to get the latest task with that name
+
+        # Cases:
+        #  - No matching UserTask
+        #  - UserTask matches
+        #  - UserTask matches but its old
+
+#        task_stale_time = datetime.datetime.utcnow() - datetime.timedelta(minutes=TASK_STALE_MINS)
+        task = UserTask.objects(user=user, task_name=task_name)[0]
+
+        # Get the task id and return the state
+        task_async = celery.AsyncResult(task.task_id)
+
+        return {
+            'task_id': task.task_id,
+            'created': str(task.created),
+            'state': task_async.state
+        }
+
+
+# Friends
 api.add_resource(FriendResource,         '/friends')
 api.add_resource(FriendInAppResource,    '/friends/in-app')
 api.add_resource(FriendNotInAppResource, '/friends/not-in-app')
+# Friends - progress
+api.add_resource(ProgressResource,       '/friends/progress')
+api.add_resource(ProgressResource,       '/friends/in-app/progress')
+api.add_resource(ProgressResource,       '/friends/not-in-app/progress')
+# Friends books
 api.add_resource(FriendBooksResource,    '/friends/books')
+
+# Books
