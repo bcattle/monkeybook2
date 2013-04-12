@@ -26,4 +26,9 @@ def loading():
     This page shows the loading screen
     The client fires off the yearbook creation process
     """
-    pass
+    template = 'loading.html'
+    context = {
+        'user_id': current_user.id,
+        'book_type': 'yearbook2012',
+    }
+    return render_template(template, **context)

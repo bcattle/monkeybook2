@@ -1,9 +1,9 @@
 import datetime
 from pytz import utc
-from monkeybook import FacebookFriend
 from monkeybook.fql.base import FQLTask
 from monkeybook.fql.getter import ResultGetter
-from monkeybook.yearbook2012.settings import *
+# TODO: remove this dependency
+from monkeybook.books.yearbook2012.settings import *
 
 
 class GetFriendsTask(FQLTask):
