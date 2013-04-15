@@ -1,10 +1,17 @@
 import datetime
 from decimal import Decimal
+from pytz import utc
 from flask.ext.login import UserMixin
 from mongoengine import *
+from monkeybook import app
 from facebook import GraphAPI
+from monkeybook.utils import short_url
+# Really, should subclass models that depend on this and stick in a yearbook2012.models
+from monkeybook.books.yearbook2012.settings import *
 
 FB_ID_FIELD_LENGTH = 30
+LOWEST_SQUARE_ASPECT_RATIO = app.config['LOWEST_SQUARE_ASPECT_RATIO']
+HIGHEST_SQUARE_ASPECT_RATIO = app.config['HIGHEST_SQUARE_ASPECT_RATIO']
 
 
 class AccessToken(EmbeddedDocument):
@@ -29,6 +36,7 @@ class User(Document, UserMixin):
     name = StringField(max_length=255)
     first_name = StringField(max_length=50)
     sex = StringField(max_length=50)
+    birthday = DateTimeField()
     affiliations = ListField(DictField())
     age_range = DictField()
     location = DictField()
@@ -99,44 +107,119 @@ class Order(Document):
     shipping_address = EmbeddedDocumentField(Address)
 
 
+class FacebookFriend(Document):
+    # Associated with *either* a user or a book
+    user = ReferenceField(User)
+    book = ReferenceField('Book')
+
+    uid = StringField(max_length=FB_ID_FIELD_LENGTH, required=True)     # NOT the primary key
+    name = StringField(max_length=255, required=True)
+    name_uppercase = StringField(max_length=255, required=True)
+    first_name = StringField(max_length=50)
+    sex = StringField(max_length=10)
+    pic_square = StringField(max_length=255)
+
+    tagged_in_photos = ListField(StringField)
+
+    top_friends_score = FloatField(default=0)
+    comments_score = FloatField(default=0)
+    posts_score = FloatField(default=0)
+    photos_score = FloatField(default=0)
+    tags = ListField(StringField)               # 'top_friend', 'top_20_friend', etc.
+
+    meta = {
+        'indexes': [('user', 'name_uppercase'), ('book', 'name_uppercase'), ('user', 'uid'), ('book', 'uid')],
+        'ordering': ['user', '-top_friends_score']
+    }
+
+    def __unicode__(self):
+        return self.name
+
+
 class PhotoSize(EmbeddedDocument):
     height = IntField(required=True)
     width = IntField(required=True)
     url = URLField(required=True)
 
 
-class PhotoComment(EmbeddedDocument):
+class ObjectComment(EmbeddedDocument):
     made_by = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     text = StringField(max_length=255, required=True)
     score = IntField(default=0)
+    likes = IntField(default=0)
+    user_likes = BooleanField(default=False)
 
     meta = {
         'ordering': ['-score']
     }
 
 
-class Photo(EmbeddedDocument):
+# TODO: Make the photo model abstract
+# Each book inherits and creates its own, they go in the same collection
+
+class Photo(Document):
     id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
-    people_in_photo = ListField(StringField)
+    user = ReferenceField(User, required=True)
+    book = ReferenceField('Book')
+
+    created = DateTimeField()
     height = IntField(required=True)
     width = IntField(required=True)
     url = URLField(required=True)
     all_sizes = ListField(EmbeddedDocumentField(PhotoSize))
     caption = StringField(max_length=255, required=True)
-    comments = ListField(EmbeddedDocumentField(PhotoComment))
+    comments = ListField(EmbeddedDocumentField(ObjectComment))
+    comments_from_friends = IntField(default=0)
+    like_count = IntField(default=0)
+
+    people_in_photo = ListField(StringField)
+    num_top_friends_in_photo = IntField(default=0)
+    num_top_20_friends_in_photo = IntField(default=0)
     tags = ListField(StringField)
-    score = IntField(default=0)
+    score = FloatField(default=0)         # Or add a series of ad-hoc score fields as needed per book?
 
     meta = {
         'indexes': ['id'],
         'ordering': ['-score']
     }
 
+    @property
+    def num_people_in_photo(self):
+        return len(self.people_in_photo) + 1        # Tagged people plus owner
 
-class WallPost(EmbeddedDocument):
+    @property
+    def top_friends_points(self):
+        return self.num_top_friends_in_photo + self.num_top_20_friends_in_photo     # This double-counts top-20 friends, we want this
+
+    @property
+    def aspect_ratio(self):
+        return float(self.width) / float(self.height)
+
+    def is_square(self):
+        return LOWEST_SQUARE_ASPECT_RATIO < self.aspect_ratio < HIGHEST_SQUARE_ASPECT_RATIO
+
+    def is_portrait(self):
+        return self.aspect_ratio < LOWEST_SQUARE_ASPECT_RATIO
+
+    def is_landscape(self):
+        return self.aspect_ratio > HIGHEST_SQUARE_ASPECT_RATIO
+
+    def get_year(self, year):
+        THE_YEAR       = datetime.datetime(year, 1, 1, tzinfo=utc)
+        THE_YEAR_END   = datetime.datetime(year, 12, 31, tzinfo=utc)
+        return Photo.objects(created__gt=THE_YEAR, created__lt=THE_YEAR_END)
+
+
+class WallPost(Document):
+    user = ReferenceField(User, required=True)
+    book = ReferenceField('Book')
+
     author_id = StringField(unique=True, max_length=FB_ID_FIELD_LENGTH, primary_key=True)
     text = StringField(max_length=255, required=True)
-    score = IntField(default=0)
+    comments = ListField(EmbeddedDocumentField(PhotoComment))
+    tags = ListField(StringField)       # Something like "top_post", "page2_post3"
+    like_count = IntField(default=0)
+    score = FloatField(default=0)
 
 
 class BookPage(DynamicEmbeddedDocument):
@@ -145,46 +228,58 @@ class BookPage(DynamicEmbeddedDocument):
 
 
 class Book(Document):
-    user = ReferenceField(User, required=True)
     book_type = StringField(max_length=20, required=True)
+    user = ReferenceField(User, required=True)
+    slug_index = SequenceField()
+    slug = StringField(max_length=20, required=True)
     created = DateTimeField(default=lambda: datetime.datetime.utcnow())
-
-    # friends = ListField(EmbeddedDocumentField(FacebookFriend))      # Repeated here because each book might have different scoring
-    photos = ListField(EmbeddedDocumentField(Photo))
-    top_posts = ListField(EmbeddedDocumentField(WallPost))
-    birthday_posts = ListField(EmbeddedDocumentField(WallPost))
+    run_time = FloatField()
 
     pages = ListField(EmbeddedDocumentField(BookPage))
 
     @property
+    def photos(self):
+        return Photo.objects(book=self)
+
+    @property
     def friends(self):
-        return FacebookFriend.objects(book=self)
+        return FacebookFriend.objects(book=self)        # Repeated here because each book might have different scoring
+
+    @property
+    def top_friends(self):
+        return FacebookFriend.objects(book=self, tags__contains=TOP_FRIEND_TAG)
+
+    @property
+    def top_20_friends(self):
+        return FacebookFriend.objects(book=self, tags__contains=TOP_20_FRIEND_TAG)
+
+    @property
+    def friends_in_book(self):
+        raise NotImplementedError
+
+    @property
+    def posts(self):
+        return WallPost.objects(book=self)
+
+    @property
+    def top_posts(self):
+        return WallPost.objects(book=self, tags__in='top_post')
+
+    @property
+    def birthday_posts(self):
+        return WallPost.objects(book=self, tags__in='birthday')
 
     meta = {
+        'indexes': ['book_type', 'user', 'slug', ['user', 'book_type']],
         'ordering': ['user', '-created']
     }
 
-
-class FacebookFriend(Document):
-    # Associated with *either* a user or a book
-    user = ReferenceField(User)
-    book = ReferenceField(Book)
-
-    uid = StringField(max_length=FB_ID_FIELD_LENGTH, required=True)     # NOT the primary key
-    name = StringField(max_length=255, required=True)
-    name_uppercase = StringField(max_length=255, required=True)
-    first_name = StringField(max_length=50)
-    sex = StringField(max_length=10)
-    pic_square = StringField(max_length=255)
-    top_friends_score = IntField(default=0)
-
-    meta = {
-        'indexes': [('user', 'name_uppercase'), ('book', 'name_uppercase')],
-        'ordering': ['user', '-top_friends_score']
-    }
-
-    def __unicode__(self):
-        return self.name
+    def save(self, *args, **kwargs):
+        # If no slug, assign one
+        if self.slug is None:
+            self.slug = short_url.encode_url(self.slug_index.generate_new_value())
+        # Save
+        super(Book, self).save(*args, **kwargs)
 
 
 class FqlResult(Document):

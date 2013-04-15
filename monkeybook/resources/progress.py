@@ -67,7 +67,7 @@ class ProgressResource(RestfulResource, CurrentUserMixin):
         #  - UserTask matches
         #  - UserTask matches but its old
 
-        #        task_stale_time = datetime.datetime.utcnow() - datetime.timedelta(minutes=TASK_STALE_MINS)
+        # task_stale_time = datetime.datetime.utcnow() - datetime.timedelta(minutes=TASK_STALE_MINS)
         tasks = UserTask.objects(user=user, task_name=task_name)
         if tasks:
             task = tasks[0]
@@ -80,8 +80,8 @@ class ProgressResource(RestfulResource, CurrentUserMixin):
                 'state': task_async.state
             }
         else:
-            # No tasks in DB, return a different status
-            app.logger.debug('User %s, looking for task %s, none found in db' % (user, task_name))
+            # No tasks in DB, or they're old. Return a different status
+            # app.logger.debug('User %s, looking for task %s, none found in db' % (user, task_name))
 
             return {
                 'task_id': '',

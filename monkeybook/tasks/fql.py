@@ -1,6 +1,7 @@
+import datetime
 from celery.utils.log import get_task_logger
 from monkeybook import celery
-from monkeybook.models import User
+from monkeybook.models import User, UserTask
 from monkeybook.tasks import LoggedUserTask
 
 logger = get_task_logger(__name__)
@@ -36,3 +37,34 @@ def run_fql(task_cls, user_id, commit=True, *args, **kwargs):
         # Store the info
         task.save(results[task.name])
     return results
+
+
+@celery.task(base=RunFqlBaseTask)
+def get_result_or_run_fql(task_cls, user_id, commit=True, stale_mins=15, *args, **kwargs):
+    """
+    Look at the UserTask collection to see
+    if there is already a task with the given age
+
+    This returns an ASYNC RESULT!
+    """
+    import ipdb
+    ipdb.set_trace()
+
+    task_name = '%s:%s' % (run_fql.name, task_cls().name)
+    task_stale_time = datetime.datetime.utcnow() - datetime.timedelta(minutes=stale_mins)
+    user = User.objects.get(id=user_id)
+    tasks = UserTask.objects(user=user, task_name=task_name, created__gt=task_stale_time)
+    if tasks:
+        task = tasks[0]
+        # Get the task id and return the state
+        task_async = celery.AsyncResult(task.task_id)
+        # Note that we can create an AsyncResult with ANY ID, no exception is thrown
+        # A task with a made-up id is 'PENDING'
+        # so we need to check if the result exists,
+        if task_async.state != 'PENDING' or task_async.state != 'FAILED':
+            # Return the async result so the child can decide whether to wait
+            return task_async
+
+    # Task doesn't exist, run it
+    task_async = run_fql.delay(task_cls, user_id, commit, *args, **kwargs)
+    return task_async

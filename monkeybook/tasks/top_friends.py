@@ -19,10 +19,10 @@ def top_friends_task(user_id):
     to get `top_friends_score` and saves to the `User.friends` field
     """
     # Run the child tasks
-    friends_task =          run_fql.s(task_cls=GetFriendsTask, user_id=user_id, commit=False)
-    tagged_with_me_task =   run_fql.s(task_cls=TaggedWithMeTask, user_id=user_id, commit=False)
-
+    friends_task =          run_fql.s(task_cls=GetFriendsTask, user_id=user_id)
+    tagged_with_me_task =   run_fql.s(task_cls=TaggedWithMeTask, user_id=user_id)
     job_async = group([friends_task, tagged_with_me_task]).apply_async()
+
     results = job_async.get()
     results = merge_dicts(*results)
 

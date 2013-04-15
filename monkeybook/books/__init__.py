@@ -1,10 +1,12 @@
 from monkeybook.utils import get_class_from_string
+from monkeybook.books import yearbook2012
 
 
 class Book(object):
-    def __init__(self, title, cover, url_prefix, module_prefix,
+    def __init__(self, book_type, title, cover, url_prefix, module_prefix,
                  run_task_name='tasks.run_book', settings_module='settings',
                  template='yearbook.html'):
+        self.book_type = book_type,
         self.title = title
         self.cover = cover
         self.url_prefix = url_prefix,
@@ -27,12 +29,7 @@ class Book(object):
 
 
 ALL_BOOKS = {
-    'yearbook2012': Book(
-        title='2012 Yearbook',
-        cover='img/book_icon_144.png',
-        url_prefix='yearbook',
-        module_prefix='yearbook2012',
-    )
+    'yearbook2012': yearbook2012.settings.BOOK,
 }
 
 

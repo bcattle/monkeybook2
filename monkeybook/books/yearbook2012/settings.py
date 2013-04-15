@@ -1,17 +1,34 @@
 import datetime, calendar
 from pytz import utc
+from monkeybook.books import Book
 
-THIS_YEAR       = datetime.datetime(2012, 1, 1, tzinfo=utc)
-THIS_YEAR_END   = datetime.datetime(2012, 12, 31, tzinfo=utc)
+BOOK = Book(
+    book_type='yearbook2012',
+    title='2012 Yearbook',
+    cover='img/book_icon_144.png',
+    url_prefix='yearbook',
+    module_prefix='yearbook2012',
+)
+
+YEARBOOK_YEAR   = 2012
+THIS_YEAR       = datetime.datetime(YEARBOOK_YEAR, 1, 1, tzinfo=utc)
+THIS_YEAR_END   = datetime.datetime(YEARBOOK_YEAR, 12, 31, tzinfo=utc)
 # http://stackoverflow.com/a/11409065/1161906
 UNIX_THIS_YEAR      = calendar.timegm(THIS_YEAR.utctimetuple())
 UNIX_THIS_YEAR_END  = calendar.timegm(THIS_YEAR_END.utctimetuple())
 
-GROUP_PHOTO_CUTOFF = datetime.datetime(2012 - 2, 1, 1, tzinfo=utc)
+GROUP_PHOTO_CUTOFF = datetime.datetime(YEARBOOK_YEAR - 2, 1, 1, tzinfo=utc)
 
 
 # Does the user have enough data for the entire book?
 MIN_TOP_PHOTOS_FOR_BOOK     = 10
+
+
+# Photo tags
+GROUP_PHOTO_TAG = 'group_photo'
+# Friend tags
+TOP_FRIEND_TAG      = 'top_friend'
+TOP_20_FRIEND_TAG   = 'top_20_friend'
 
 
 PHOTO_FIELDS = 'object_id, images, created, comment_info, like_info'
